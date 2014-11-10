@@ -2,42 +2,154 @@
 #include <driverlib/sysctl.h>
 #include <driverlib/gpio.h>
 #include <inc/hw_memmap.h>
+#include "SysProcessor.h"
+#include "util.h"
+
+#ifdef PART_TM4C123GH6PGE
+    #define SYSCTL_PERIPH_USR_LED   SYSCTL_PERIPH_GPIOG
+    #define GPIO_BASE_USR_LED       GPIO_PORTG_BASE
+    #define GPIO_PIN_USR_LED        GPIO_PIN_2
+#endif
+#ifdef PART_TM4C1294NCPDT
+    #define SYSCTL_PERIPH_USR_LED1  SYSCTL_PERIPH_GPION
+    #define GPIO_BASE_USR_LED1      GPIO_PORTN_BASE
+    #define GPIO_PIN_USR_LED1       GPIO_PIN_1
+
+    #define SYSCTL_PERIPH_USR_LED2  SYSCTL_PERIPH_GPION
+    #define GPIO_BASE_USR_LED2      GPIO_PORTN_BASE
+    #define GPIO_PIN_USR_LED2       GPIO_PIN_0
+
+    #define SYSCTL_PERIPH_USR_LED3  SYSCTL_PERIPH_GPIOF
+    #define GPIO_BASE_USR_LED3      GPIO_PORTF_BASE
+    #define GPIO_PIN_USR_LED3       GPIO_PIN_4
+
+    #define SYSCTL_PERIPH_USR_LED4  SYSCTL_PERIPH_GPIOF
+    #define GPIO_BASE_USR_LED4      GPIO_PORTF_BASE
+    #define GPIO_PIN_USR_LED4       GPIO_PIN_0
+#endif
 
 DWORD testTask( void* lpParam );
 
-volatile unsigned long g_ulSystemClock;
+struct STGPIOOutputConfig
+{
+    DWORD dwSYSCTL;
+    DWORD dwPortBase;
+    DWORD dwPin;
+};
+
+struct STUserLedControl
+{
+    DWORD dwCount;
+    DWORD dwID;
+    DWORD dwHandle;
+};
+
+
+/*----------------------------------------------------------------------------*/
+
+const struct STGPIOOutputConfig stUserLedCfg[] =
+{
+    [0] =
+    {
+        .dwSYSCTL   = SYSCTL_PERIPH_USR_LED1,
+        .dwPortBase = GPIO_BASE_USR_LED1,
+        .dwPin      = GPIO_PIN_USR_LED1,
+    },
+    [1]=
+    {
+        .dwSYSCTL   = SYSCTL_PERIPH_USR_LED2,
+        .dwPortBase = GPIO_BASE_USR_LED2,
+        .dwPin      = GPIO_PIN_USR_LED2,
+    },
+    [2]=
+    {
+        .dwSYSCTL   = SYSCTL_PERIPH_USR_LED3,
+        .dwPortBase = GPIO_BASE_USR_LED3,
+        .dwPin      = GPIO_PIN_USR_LED3,
+    },
+    [3]=
+    {
+        .dwSYSCTL   = SYSCTL_PERIPH_USR_LED4,
+        .dwPortBase = GPIO_BASE_USR_LED4,
+        .dwPin      = GPIO_PIN_USR_LED4,
+    },
+};
+
+static struct STUserLedControl userLed[4] =
+{
+    [0]=
+    {
+        .dwID       = 0,
+        .dwCount    = 0,
+        .dwID       = 0,
+        .dwHandle   = 0,
+    },
+    [1]=
+    {
+        .dwID       = 0,
+        .dwCount    = 0,
+        .dwID       = 0,
+        .dwHandle   = 0,
+    },
+    [2]=
+    {
+        .dwID       = 0,
+        .dwCount    = 0,
+        .dwID       = 0,
+        .dwHandle   = 0,
+    },
+    [3]=
+    {
+        .dwID       = 0,
+        .dwCount    = 0,
+        .dwID       = 0,
+        .dwHandle   = 0,
+    },
+};
+
+/*----------------------------------------------------------------------------*/
 
 void main()
 {
-    //! handler para o timer
-    DWORD dwTimerHandle;
+    BYTE bCounter;
+    struct STUserLedControl*            pUserLedControl;
+    const struct STGPIOOutputConfig*    pUserLedCfg;
     
-    //! parâmetro a ser passada para a função de callback
-    DWORD dwTimerParam = 1000;
+    SetSystemClock();
 
-    //! configura o clock do processador
-    SysCtlClockSet( SYSCTL_SYSDIV_3     | 
-                    SYSCTL_USE_PLL      | 
-                    SYSCTL_OSC_MAIN     | 
-                    SYSCTL_XTAL_16MHZ   );
-    g_ulSystemClock = SysCtlClockGet();
+#ifdef PART_TM4C123GH6PGE
+    SysCtlPeripheralEnable( SYSCTL_PERIPH_USR_LED );
+    GPIOPinTypeGPIOOutput( GPIO_BASE_USR_LED, GPIO_PIN_USR_LED );
+#endif
+#ifdef PART_TM4C1294NCPDT
+    for (  bCounter = 0, pUserLedCfg = stUserLedCfg; bCounter < GET_ARRAY_LEN( stUserLedCfg ); bCounter++, pUserLedCfg++ )
+    {
+        SysCtlPeripheralEnable( pUserLedCfg->dwSYSCTL );
+        GPIOPinTypeGPIOOutput( pUserLedCfg->dwPortBase, pUserLedCfg->dwPin );
+    }
+#endif
     
-    //! específico para os dispositivos TIVA: habilita  e configura o periférico
-    SysCtlPeripheralEnable( SYSCTL_PERIPH_GPIOG );
-    GPIOPinTypeGPIOOutput( GPIO_PORTG_BASE, GPIO_PIN_2 );
-
-    //! inicializa o timer para gerar interrupção a cada 500us
     TTimerCfgTimeOut( 500 );
     
-    //! registra a função de callback testTask para ser executada a cada 250 ms
-    TTimerRegisterCallBack( 250*TTIMER_1MS_INTERVAL , 
-                            TimerPeriodic           , 
-                            testTask                , 
-                            &dwTimerParam           , 
-                            &dwTimerHandle          );
-    
-    //! inicia o TTimer dado por dwTimerHandle
+#ifdef PART_TM4C123GH6PGE
+    TTimerRegisterCallBack( 600*TTIMER_1MS_INTERVAL, TimerPeriodic, testTask, &dwTimerParam, &dwTimerHandle );
     TTimerStart( dwTimerHandle );
+#endif
+#ifdef PART_TM4C1294NCPDT
+
+    for( bCounter = 0, pUserLedControl = userLed; bCounter < GET_ARRAY_LEN( userLed ); bCounter++, pUserLedControl++ )
+    {
+
+        pUserLedControl->dwID = (DWORD)bCounter;
+        TTimerRegisterCallBack( (100*(bCounter+1))*TTIMER_1MS_INTERVAL,
+                                TimerPeriodic,
+                                testTask,
+                                (void*)bCounter,
+                                &pUserLedControl->dwHandle );
+        TTimerStart( pUserLedControl->dwHandle );
+    }
+    
+#endif
 
     for( ;; );
 }
@@ -46,20 +158,20 @@ void main()
 
 DWORD testTask( void* lpParam )
 {
-    DWORD* pVal = (DWORD*)lpParam;
-    static DWORD dwCount = 0;
+    const DWORD dwIndex                                 = (DWORD)lpParam;
+    struct STUserLedControl*            pUserLedControl = &userLed[dwIndex];
+    const struct STGPIOOutputConfig*    pUserLedCfg     = &stUserLedCfg[dwIndex];
 
-    if( dwCount & 1 )
+    if( pUserLedControl->dwCount & 1 )
     {
-        GPIOPinWrite( GPIO_PORTG_BASE, GPIO_PIN_2, GPIO_PIN_2 );
+        GPIOPinWrite( pUserLedCfg->dwPortBase, pUserLedCfg->dwPin, pUserLedCfg->dwPin );
     }
     else
     {
-        GPIOPinWrite( GPIO_PORTG_BASE, GPIO_PIN_2, ~GPIO_PIN_2 );
+        GPIOPinWrite( pUserLedCfg->dwPortBase, pUserLedCfg->dwPin, ~pUserLedCfg->dwPin );
     }
     
-    dwCount++;
-    *pVal = dwCount;
+    pUserLedControl->dwCount++;
 
     return 0;
 }
