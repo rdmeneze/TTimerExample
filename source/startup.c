@@ -321,3 +321,12 @@ IntDefaultHandler(void)
     {
     }
 }
+
+void UARTStdioIntHandler(void)
+{
+}
+
+void SysTickIntHandler(void)
+{
+
+}
