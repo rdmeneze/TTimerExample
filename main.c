@@ -9,8 +9,7 @@
     #define SYSCTL_PERIPH_USR_LED   SYSCTL_PERIPH_GPIOG
     #define GPIO_BASE_USR_LED       GPIO_PORTG_BASE
     #define GPIO_PIN_USR_LED        GPIO_PIN_2
-#endif
-#ifdef PART_TM4C1294NCPDT
+#elif PART_TM4C1294NCPDT
     #define SYSCTL_PERIPH_USR_LED1  SYSCTL_PERIPH_GPION
     #define GPIO_BASE_USR_LED1      GPIO_PORTN_BASE
     #define GPIO_PIN_USR_LED1       GPIO_PIN_1
@@ -26,14 +25,16 @@
     #define SYSCTL_PERIPH_USR_LED4  SYSCTL_PERIPH_GPIOF
     #define GPIO_BASE_USR_LED4      GPIO_PORTF_BASE
     #define GPIO_PIN_USR_LED4       GPIO_PIN_0
+
 #endif
+
 
 DWORD testTask( void* lpParam );
 
 struct STGPIOOutputConfig
 {
     DWORD dwSYSCTL;
-    DWORD dwPortBase;
+    DWORD dwPortBase; 
     DWORD dwPin;
 };
 
@@ -44,12 +45,11 @@ struct STUserLedControl
     DWORD dwHandle;
 };
 
-
 /*----------------------------------------------------------------------------*/
 
-const struct STGPIOOutputConfig stUserLedCfg[] =
+const struct STGPIOOutputConfig stUserLedCfg[] = 
 {
-    [0] =
+    [0] = 
     {
         .dwSYSCTL   = SYSCTL_PERIPH_USR_LED1,
         .dwPortBase = GPIO_BASE_USR_LED1,
@@ -75,35 +75,35 @@ const struct STGPIOOutputConfig stUserLedCfg[] =
     },
 };
 
-static struct STUserLedControl userLed[4] =
+static struct STUserLedControl userLed[4] = 
 {
     [0]=
     {
-        .dwID       = 0,
+        .dwID       = 0, 
         .dwCount    = 0,
         .dwID       = 0,
-        .dwHandle   = 0,
+        .dwHandle   = 0, 
     },
     [1]=
     {
-        .dwID       = 0,
+        .dwID       = 0, 
         .dwCount    = 0,
         .dwID       = 0,
-        .dwHandle   = 0,
+        .dwHandle   = 0, 
     },
     [2]=
     {
-        .dwID       = 0,
+        .dwID       = 0, 
         .dwCount    = 0,
         .dwID       = 0,
-        .dwHandle   = 0,
+        .dwHandle   = 0, 
     },
     [3]=
     {
-        .dwID       = 0,
+        .dwID       = 0, 
         .dwCount    = 0,
         .dwID       = 0,
-        .dwHandle   = 0,
+        .dwHandle   = 0, 
     },
 };
 
@@ -111,18 +111,17 @@ static struct STUserLedControl userLed[4] =
 
 void main()
 {
-    DWORD dwCounter;
+    BYTE bCounter;
     struct STUserLedControl*            pUserLedControl;
     const struct STGPIOOutputConfig*    pUserLedCfg;
     
-    SetSystemClock();
+    SetSystemClock();    
 
-#ifdef PART_TM4C123GH6PGE
+#ifdef PART_TM4C123GH6PGE    
     SysCtlPeripheralEnable( SYSCTL_PERIPH_USR_LED );
     GPIOPinTypeGPIOOutput( GPIO_BASE_USR_LED, GPIO_PIN_USR_LED );
-#endif
-#ifdef PART_TM4C1294NCPDT
-    for (  dwCounter = 0, pUserLedCfg = stUserLedCfg; dwCounter < GET_ARRAY_LEN( stUserLedCfg ); dwCounter++, pUserLedCfg++ )
+#elif PART_TM4C1294NCPDT
+    for (  bCounter = 0, pUserLedCfg = stUserLedCfg; bCounter < GET_ARRAY_LEN( stUserLedCfg ); bCounter++, pUserLedCfg++ )
     {
         SysCtlPeripheralEnable( pUserLedCfg->dwSYSCTL );
         GPIOPinTypeGPIOOutput( pUserLedCfg->dwPortBase, pUserLedCfg->dwPin );
@@ -131,25 +130,24 @@ void main()
     
     TTimerCfgTimeOut( 500 );
     
-#ifdef PART_TM4C123GH6PGE
+#ifdef PART_TM4C123GH6PGE    
     TTimerRegisterCallBack( 600*TTIMER_1MS_INTERVAL, TimerPeriodic, testTask, &dwTimerParam, &dwTimerHandle );
     TTimerStart( dwTimerHandle );
-#endif
-#ifdef PART_TM4C1294NCPDT
-
-    for( dwCounter = 0, pUserLedControl = userLed; dwCounter < GET_ARRAY_LEN( userLed ); dwCounter++, pUserLedControl++ )
+#elif PART_TM4C1294NCPDT
+    
+    for( bCounter = 0, pUserLedControl = userLed; bCounter < GET_ARRAY_LEN( userLed ); bCounter++, pUserLedControl++ )
     {
-
-        pUserLedControl->dwID = (DWORD)dwCounter;
-        TTimerRegisterCallBack( (100*(dwCounter+1))*TTIMER_1MS_INTERVAL,
-                                TimerPeriodic,
-                                testTask,
-                                (void*)dwCounter,
+        
+        pUserLedControl->dwID = (DWORD)bCounter;
+        TTimerRegisterCallBack( (100*(bCounter+1))*TTIMER_1MS_INTERVAL, 
+                                TimerPeriodic, 
+                                testTask, 
+                                (void*)bCounter, 
                                 &pUserLedControl->dwHandle );
         TTimerStart( pUserLedControl->dwHandle );
     }
     
-#endif
+#endif    
 
     for( ;; );
 }
@@ -161,7 +159,7 @@ DWORD testTask( void* lpParam )
     const DWORD dwIndex                                 = (DWORD)lpParam;
     struct STUserLedControl*            pUserLedControl = &userLed[dwIndex];
     const struct STGPIOOutputConfig*    pUserLedCfg     = &stUserLedCfg[dwIndex];
-
+    
     if( pUserLedControl->dwCount & 1 )
     {
         GPIOPinWrite( pUserLedCfg->dwPortBase, pUserLedCfg->dwPin, pUserLedCfg->dwPin );
