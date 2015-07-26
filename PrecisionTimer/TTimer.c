@@ -4,14 +4,15 @@
 #include <driverlib/timer.h>
 #include <inc/hw_memmap.h>
 #include "errno.h"
+#include "SysProcessor.h"
 
 /*----------------------------------------------------------------------------*/
 
 #define TIMER_ENTRY_CB      16
 #define TIMER_ENTRY_NULL    0
 
-#define TIMER_TIMEBASE_us (SysCtlClockGet() / 1000000.)
-#define TIMER_TIMEBASE_ms (SysCtlClockGet() / 1000.)
+#define TIMER_TIMEBASE_us (GetSystemClock() / 1000000.)
+#define TIMER_TIMEBASE_ms (GetSystemClock() / 1000.)
 
 #define TIMER_SYSCTL    SYSCTL_PERIPH_TIMER0
 #define TIMER_BASE      TIMER0_BASE
@@ -20,13 +21,14 @@
 
 /*----------------------------------------------------------------------------*/
 
-struct STTimer{
-   DWORD    dwHandle;
-   long long    iCount;
-   long long    iReloadValue;
+struct STTimer
+{
+   uint32_t dwHandle;
+   uint32_t iCount;
+   uint32_t iReloadValue;
    TimerType    type;
    void*    lpParam;
-   BYTE     bStarted;
+   uint8_t  bStarted;
    callbacktimer_func   callback_func;
 };
 
@@ -50,7 +52,7 @@ void TTimerCfgTimeOut( DWORD dwTimeMicro )
     {
         dwTimeMicro = 10;
     }
-    
+        
     dwCountValue = (DWORD)((dwTimeMicro * TIMER_TIMEBASE_us)+0.5);
 
     if ( !bInit )
@@ -112,7 +114,7 @@ DWORD TTimerRegisterCallBack( DWORD dwDelay, TimerType type, callbacktimer_func 
     if ( dwDelay < dwTimerTimeBase )
         dwDelay = dwTimerTimeBase;
     
-    count = (DWORD)((dwDelay / (float)dwTimerTimeBase) + 0.5);
+    count = (DWORD)((dwDelay / (float)dwTimerTimeBase) + 0.5f);
     
     for ( pTTimer = stCBTimer, i = 0; i < GET_ARRAY_LEN( stCBTimer ); i++, pTTimer++ )
     {
@@ -248,7 +250,7 @@ DWORD TTimerStart( DWORD dwHandle )
     
     if ( i == GET_ARRAY_LEN( stCBTimer ) )
     {
-        return -1;
+        return (DWORD)-1;
     }
     
     return 0;
@@ -272,7 +274,7 @@ DWORD TTimerStop( DWORD dwHandle )
     
     if ( i == GET_ARRAY_LEN( stCBTimer ) )
     {
-        return -1;
+        return (DWORD)-1;
     }
     
     return 0;
