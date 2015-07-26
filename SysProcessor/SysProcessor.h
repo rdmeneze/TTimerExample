@@ -3,8 +3,8 @@
 
 #include "defs.h"
 
-DWORD SetSystemClock( );
+DWORD SetSystemClock( void );
 
-DWORD GetSystemClock( );
+DWORD GetSystemClock( void );
 
 #endif /*  */

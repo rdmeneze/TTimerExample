@@ -7,7 +7,7 @@ static DWORD g_ulSystemClock = 0;
 
 /*----------------------------------------------------------------------------*/
 
-DWORD SetSystemClock( )
+DWORD SetSystemClock( void )
 {
 #ifdef  PART_TM4C123GH6PGE
     SysCtlClockSet(SYSCTL_SYSDIV_3 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
@@ -23,7 +23,7 @@ DWORD SetSystemClock( )
 
 /*----------------------------------------------------------------------------*/
 
-DWORD GetSystemClock( )
+DWORD GetSystemClock( void )
 {
     return g_ulSystemClock;
 }
