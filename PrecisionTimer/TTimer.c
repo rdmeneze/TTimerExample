@@ -24,8 +24,8 @@
 struct STTimer
 {
    uint32_t dwHandle;
-   uint32_t iCount;
-   uint32_t iReloadValue;
+   int32_t iCount;
+   int32_t iReloadValue;
    TimerType    type;
    void*    lpParam;
    uint8_t  bStarted;
