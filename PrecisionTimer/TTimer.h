@@ -1,7 +1,7 @@
 /***
  *  \file ttimer.h
  *  \brief  definitions for the TTimer operations
- *  \author Rafael Dias <rafael.menezes@iacit.com.br>
+ *  \author Rafael Dias <rdmeneze@gmail.com>
  *  \date    jul/2014
  */
 
@@ -14,8 +14,16 @@
 #define TTIMER_1SEC_INTERVAL    (1000*TTIMER_1MS_INTERVAL)
 #define TTIMER_1MIN_INTERVAL    (60*TTIMER_1SEC_INTERVAL)
 
+/**
+ * @typedef callbacktimer_func 
+ * @brief   declare a data type for callback functions to TTimer 
+ */
 typedef uint32_t (*callbacktimer_func)( void* );
 
+/**
+ * @enum  TimerType
+ * @brief definition of the types of timers
+ */
 typedef enum
 {
     TimerOneShot = 0,

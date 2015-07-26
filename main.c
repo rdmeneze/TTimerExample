@@ -12,6 +12,7 @@
 #include "SysProcessor.h"
 #include "util.h"
 
+/* definitions of board leds configurations  */
 #ifdef PART_TM4C123GH6PGE
 
     #define SYSCTL_PERIPH_USR_LED   SYSCTL_PERIPH_GPIOG
@@ -38,8 +39,13 @@
 
 #endif
 
+/* local methods declarations                          */
 
 DWORD testTask( void* lpParam );
+
+/*******************************************************/
+
+/* local data type definitions                         */
 
 /**
  *  @struct STGPIOOutputConfig
@@ -63,8 +69,9 @@ struct STUserLedControl
     DWORD dwHandle;     /**< HANDLE of LED                                              */
 };
 
-/*----------------------------------------------------------------------------*/
+/**********************************************************************************/
 
+/* GPIOs struct configuration                                                     */
 const struct STGPIOOutputConfig stUserLedCfg[] = 
 {
 #ifdef PART_TM4C123GH6PGE
@@ -141,13 +148,17 @@ static struct STUserLedControl userLed[] =
 
 /*----------------------------------------------------------------------------*/
 
+/**
+ * @brief main function
+ * @return none
+ */
 int main()
 {
     BYTE bCounter;
     struct STUserLedControl*            pUserLedControl;
     const struct STGPIOOutputConfig*    pUserLedCfg;
     
-    SetSystemClock();    
+    SetSystemClock();  /* configure the system clock  */    
 
     for (  bCounter = 0, pUserLedCfg = stUserLedCfg; bCounter < GET_ARRAY_LEN( stUserLedCfg ); bCounter++, pUserLedCfg++ )
     {
@@ -155,11 +166,11 @@ int main()
         GPIOPinTypeGPIOOutput( pUserLedCfg->dwPortBase, pUserLedCfg->dwPin );
     }
     
-    TTimerCfgTimeOut( 500 );
+    TTimerCfgTimeOut( 500 );  /* initialize the ttimer system  */
     
     for( bCounter = 0, pUserLedControl = userLed; bCounter < GET_ARRAY_LEN( userLed ); bCounter++, pUserLedControl++ )
     {
-        
+        /* create a TTimer entry point */
         pUserLedControl->dwID = (DWORD)bCounter;
         TTimerRegisterCallBack( (200*(bCounter+1))*TTIMER_1MS_INTERVAL, 
                                 TimerPeriodic, 
@@ -170,11 +181,13 @@ int main()
     }
 
     for( ;; );
-    
 }
 
 /******************************************************************************/
 
+/**
+ * @brief testTask worker task
+ */
 DWORD testTask( void* lpParam )
 {
     const DWORD dwIndex                                 = (DWORD)lpParam;

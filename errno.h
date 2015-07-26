@@ -1,3 +1,10 @@
+/**
+ * @file  errno.h
+ * @brief definitions of system errors code
+ * @author rafael dias <rdmeneze@gmail.com>
+ * @date  oct/2014 
+ */
+
 #ifndef __ERRNO_H__
 #define __ERRNO_H__
 

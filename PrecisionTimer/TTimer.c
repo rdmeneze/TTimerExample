@@ -20,16 +20,18 @@
 #define TIMER_HANDLE_INITIAL_VALUE  (0xEEDF)
 
 /*----------------------------------------------------------------------------*/
-
+/**
+ * @brief TTimer control struct
+ */
 struct STTimer
 {
-   uint32_t dwHandle;
-   int32_t iCount;
-   int32_t iReloadValue;
-   TimerType    type;
-   void*    lpParam;
-   uint8_t  bStarted;
-   callbacktimer_func   callback_func;
+  uint32_t     dwHandle;            /**< TTimer system identification */
+  int32_t      iCount;              /**< counter control              */
+  int32_t      iReloadValue;        /**< reload value. Used by reload timer      */
+  TimerType    type;                /**< type of timer: retriggerable or oneshot */
+  void*        lpParam;             /**< parameter to be passed to callback function */
+  uint8_t      bStarted;            /**< signalize that the timer is started     */
+  callbacktimer_func   callback_func;  /**< callback function */
 };
 
 /*----------------------------------------------------------------------------*/
@@ -71,6 +73,8 @@ void TTimerCfgTimeOut( DWORD dwTimeMicro )
             pTTimer->bStarted       = 0;
         }    
 
+
+	/* hardware timer initialization */
         SysCtlPeripheralEnable( TIMER_SYSCTL );
         TimerConfigure(TIMER_BASE, TIMER_CFG_PERIODIC);
         TimerLoadSet( TIMER_BASE, TIMER_A, dwCountValue );
@@ -103,16 +107,27 @@ DWORD TTimerRegisterCallBack( DWORD dwDelay, TimerType type, callbacktimer_func 
     struct STTimer * pTTimer;
     
     if ( !bInit )
-        return EPERM;
+    {
+      /* the library isn't initialized  */
+      return EPERM;
+    }
     
     if ( callback_func == NULL )
-        return EPERM;
+    {
+      /* invalid parameter */
+      return EPERM;
+    }
     
     if ( bInstanceCounter++ > TIMER_ENTRY_CB )
-        return ENOMEM;
+    {
+      /* exceed the timers limit. See at the TIMER_ENTRY_CB macro  */
+      return ENOMEM;
+    }
     
     if ( dwDelay < dwTimerTimeBase )
-        dwDelay = dwTimerTimeBase;
+    {
+      dwDelay = dwTimerTimeBase;
+    }
     
     count = (DWORD)((dwDelay / (float)dwTimerTimeBase) + 0.5f);
     
@@ -187,7 +202,7 @@ void Timer_ISR_Handler( void )
     DWORD dwExecuteCBFlag = 0;
     DWORD dwCBRet = 0;
     
-	for ( i = 0, pTTimer = stCBTimer; i < GET_ARRAY_LEN( stCBTimer ); i++, pTTimer++ )
+    for ( i = 0, pTTimer = stCBTimer; i < GET_ARRAY_LEN( stCBTimer ); i++, pTTimer++ )
     {
         if ( pTTimer->dwHandle != TIMER_ENTRY_NULL )
         {
@@ -288,7 +303,7 @@ DWORD TTimerRestart( DWORD dwHandle )
     
     if ( !dwRet )
     {
-        dwRet = TTimerStart( dwHandle );
+      dwRet = TTimerStart( dwHandle );
     }
     return dwRet;
 }
