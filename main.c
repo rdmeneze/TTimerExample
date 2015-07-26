@@ -1,3 +1,10 @@
+/**
+ *  @file   main.c
+ *  @brief  main file of TTimerExample project
+ *  @author Rafael Dias <rdmeneze@gmail.com>
+ *  @date   jul/2015 
+ */
+
 #include "ttimer.h"
 #include <driverlib/sysctl.h>
 #include <driverlib/gpio.h>
@@ -6,10 +13,13 @@
 #include "util.h"
 
 #ifdef PART_TM4C123GH6PGE
+
     #define SYSCTL_PERIPH_USR_LED   SYSCTL_PERIPH_GPIOG
     #define GPIO_BASE_USR_LED       GPIO_PORTG_BASE
     #define GPIO_PIN_USR_LED        GPIO_PIN_2
+
 #elif PART_TM4C1294NCPDT
+
     #define SYSCTL_PERIPH_USR_LED1  SYSCTL_PERIPH_GPION
     #define GPIO_BASE_USR_LED1      GPIO_PORTN_BASE
     #define GPIO_PIN_USR_LED1       GPIO_PIN_1
@@ -31,24 +41,40 @@
 
 DWORD testTask( void* lpParam );
 
+/**
+ *  @struct STGPIOOutputConfig
+ *  @brief  struct to represent the GPIO configurations
+ */
 struct STGPIOOutputConfig
 {
-    DWORD dwSYSCTL;
-    DWORD dwPortBase; 
-    DWORD dwPin;
+    DWORD dwSYSCTL;     /**< the SYSCTL value   */
+    DWORD dwPortBase;   /**< the PortBase value */
+    DWORD dwPin;        /**< the Pin value      */
 };
 
+/**
+ *  @struct STUserLedControl
+ *  @brief  struct to represent the Led control structure
+ */
 struct STUserLedControl
 {
-    DWORD dwCount;
-    DWORD dwID;
-    DWORD dwHandle;
+    DWORD dwCount;      /**< the count variable. Used to control the state of ON/OFF    */
+    DWORD dwID;         /**< ID of LED                                                  */
+    DWORD dwHandle;     /**< HANDLE of LED                                              */
 };
 
 /*----------------------------------------------------------------------------*/
 
 const struct STGPIOOutputConfig stUserLedCfg[] = 
 {
+#ifdef PART_TM4C123GH6PGE
+    [0] = 
+    {
+        .dwSYSCTL   = SYSCTL_PERIPH_USR_LED,
+        .dwPortBase = GPIO_BASE_USR_LED,
+        .dwPin      = GPIO_PIN_USR_LED,
+    }
+#elif PART_TM4C1294NCPDT
     [0] = 
     {
         .dwSYSCTL   = SYSCTL_PERIPH_USR_LED1,
@@ -73,43 +99,49 @@ const struct STGPIOOutputConfig stUserLedCfg[] =
         .dwPortBase = GPIO_BASE_USR_LED4,
         .dwPin      = GPIO_PIN_USR_LED4,
     },
+#endif    
 };
 
-static struct STUserLedControl userLed[4] = 
+static struct STUserLedControl userLed[] = 
 {
+#ifdef PART_TM4C123GH6PGE
     [0]=
     {
         .dwID       = 0, 
         .dwCount    = 0,
-        .dwID       = 0,
+        .dwHandle   = 0, 
+    }
+#elif PART_TM4C1294NCPDT
+    [0]=
+    {
+        .dwID       = 0, 
+        .dwCount    = 0,
         .dwHandle   = 0, 
     },
     [1]=
     {
         .dwID       = 0, 
         .dwCount    = 0,
-        .dwID       = 0,
         .dwHandle   = 0, 
     },
     [2]=
     {
         .dwID       = 0, 
         .dwCount    = 0,
-        .dwID       = 0,
         .dwHandle   = 0, 
     },
     [3]=
     {
         .dwID       = 0, 
         .dwCount    = 0,
-        .dwID       = 0,
         .dwHandle   = 0, 
     },
+#endif
 };
 
 /*----------------------------------------------------------------------------*/
 
-void main()
+int main()
 {
     BYTE bCounter;
     struct STUserLedControl*            pUserLedControl;
@@ -117,39 +149,28 @@ void main()
     
     SetSystemClock();    
 
-#ifdef PART_TM4C123GH6PGE    
-    SysCtlPeripheralEnable( SYSCTL_PERIPH_USR_LED );
-    GPIOPinTypeGPIOOutput( GPIO_BASE_USR_LED, GPIO_PIN_USR_LED );
-#elif PART_TM4C1294NCPDT
     for (  bCounter = 0, pUserLedCfg = stUserLedCfg; bCounter < GET_ARRAY_LEN( stUserLedCfg ); bCounter++, pUserLedCfg++ )
     {
         SysCtlPeripheralEnable( pUserLedCfg->dwSYSCTL );
         GPIOPinTypeGPIOOutput( pUserLedCfg->dwPortBase, pUserLedCfg->dwPin );
     }
-#endif
     
     TTimerCfgTimeOut( 500 );
-    
-#ifdef PART_TM4C123GH6PGE    
-    TTimerRegisterCallBack( 600*TTIMER_1MS_INTERVAL, TimerPeriodic, testTask, &dwTimerParam, &dwTimerHandle );
-    TTimerStart( dwTimerHandle );
-#elif PART_TM4C1294NCPDT
     
     for( bCounter = 0, pUserLedControl = userLed; bCounter < GET_ARRAY_LEN( userLed ); bCounter++, pUserLedControl++ )
     {
         
         pUserLedControl->dwID = (DWORD)bCounter;
-        TTimerRegisterCallBack( (100*(bCounter+1))*TTIMER_1MS_INTERVAL, 
+        TTimerRegisterCallBack( (200*(bCounter+1))*TTIMER_1MS_INTERVAL, 
                                 TimerPeriodic, 
                                 testTask, 
                                 (void*)bCounter, 
                                 &pUserLedControl->dwHandle );
         TTimerStart( pUserLedControl->dwHandle );
     }
-    
-#endif    
 
     for( ;; );
+    
 }
 
 /******************************************************************************/
